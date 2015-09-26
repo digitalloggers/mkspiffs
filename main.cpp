@@ -25,6 +25,7 @@ static std::vector<uint8_t> s_flashmem;
 
 static std::string s_dirName;
 static std::string s_imageName;
+static bool s_noFormat;
 static int s_imageSize;
 static int s_pageSize;
 static int s_blockSize;
@@ -93,10 +94,15 @@ bool spiffsMount(){
 bool spiffsFormat(){
   spiffsMount();
   SPIFFS_unmount(&s_fs);
-  int formated = SPIFFS_format(&s_fs);
-  if(formated != SPIFFS_OK)
-    return false;
-  return (spiffsTryMount() == SPIFFS_OK);
+  if (!s_noFormat) {
+    int formated = SPIFFS_format(&s_fs);
+    if(formated != SPIFFS_OK)
+      return false;
+    return (spiffsTryMount() == SPIFFS_OK);
+  } else {
+    spiffsMount();
+    return 1;
+  }
 }
 
 void spiffsUnmount(){
@@ -485,6 +491,7 @@ void processArgs(int argc, const char** argv) {
     TCLAP::ValueArg<int> imageSizeArg( "s", "size", "fs image size, in bytes", false, 0x10000, "number" );
     TCLAP::ValueArg<int> pageSizeArg( "p", "page", "fs page size, in bytes", false, 256, "number" );
     TCLAP::ValueArg<int> blockSizeArg( "b", "block", "fs block size, in bytes", false, 4096, "number" );
+    TCLAP::SwitchArg noFormatArg( "n", "no-format", "do not format the image, imitating NodeMCU", false);
 
     cmd.add( imageSizeArg );
     cmd.add( pageSizeArg );
@@ -492,6 +499,7 @@ void processArgs(int argc, const char** argv) {
     std::vector<TCLAP::Arg*> args = {&packArg, &unpackArg, &listArg, &visualizeArg};
     cmd.xorAdd( args );
     cmd.add( outNameArg );
+    cmd.add( noFormatArg );
     cmd.parse( argc, argv );
 
     if (packArg.isSet()) {
@@ -510,6 +518,7 @@ void processArgs(int argc, const char** argv) {
     s_imageSize = imageSizeArg.getValue();
     s_pageSize  = pageSizeArg.getValue();
     s_blockSize = blockSizeArg.getValue();
+    s_noFormat  = noFormatArg.isSet();
 }
 
 int main(int argc, const char * argv[]) {

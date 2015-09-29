@@ -26,6 +26,7 @@ static std::vector<uint8_t> s_flashmem;
 static std::string s_dirName;
 static std::string s_imageName;
 static bool s_noFormat;
+static bool s_relative;
 static int s_imageSize;
 static int s_pageSize;
 static int s_blockSize;
@@ -395,7 +396,7 @@ int actionPack() {
     }
 
     spiffsFormat();
-    int result = addFiles(s_dirName.c_str(), "/");
+    int result = s_relative ? addFiles((s_dirName + "/").c_str(), "") : addFiles(s_dirName.c_str(), "/");
     spiffsUnmount();
 
     fwrite(&s_flashmem[0], 4, s_flashmem.size()/4, fdres);
@@ -492,6 +493,7 @@ void processArgs(int argc, const char** argv) {
     TCLAP::ValueArg<int> pageSizeArg( "p", "page", "fs page size, in bytes", false, 256, "number" );
     TCLAP::ValueArg<int> blockSizeArg( "b", "block", "fs block size, in bytes", false, 4096, "number" );
     TCLAP::SwitchArg noFormatArg( "n", "no-format", "do not format the image, imitating NodeMCU", false);
+    TCLAP::SwitchArg relativeArg( "r", "relative", "store filenames without a leading slash, imitating NodeMCU", false);
 
     cmd.add( imageSizeArg );
     cmd.add( pageSizeArg );
@@ -500,6 +502,7 @@ void processArgs(int argc, const char** argv) {
     cmd.xorAdd( args );
     cmd.add( outNameArg );
     cmd.add( noFormatArg );
+    cmd.add( relativeArg );
     cmd.parse( argc, argv );
 
     if (packArg.isSet()) {
@@ -519,6 +522,7 @@ void processArgs(int argc, const char** argv) {
     s_pageSize  = pageSizeArg.getValue();
     s_blockSize = blockSizeArg.getValue();
     s_noFormat  = noFormatArg.isSet();
+    s_relative  = relativeArg.isSet();
 }
 
 int main(int argc, const char * argv[]) {

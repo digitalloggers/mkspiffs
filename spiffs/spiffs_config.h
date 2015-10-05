@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include "c_types.h"
 
 typedef int16_t file_t;
 typedef int32_t s32_t;
